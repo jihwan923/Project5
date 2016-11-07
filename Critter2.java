@@ -10,7 +10,7 @@
  * Fall 2016
  */
 
-package assignment4;
+package assignment5;
 
 public class Critter2 extends Critter {
 
@@ -125,4 +125,11 @@ public class Critter2 extends Critter {
 		}
 		System.out.println();
 	}
+
+	@Override
+	public CritterShape viewShape() {
+		return CritterShape.CIRCLE;
+	}
+	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.ORANGE; }
+	public javafx.scene.paint.Color viewColor() { return null; }
 }

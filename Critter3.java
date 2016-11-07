@@ -9,7 +9,7 @@
  * Slip days used: <0>
  * Fall 2016
  */
-package assignment4;
+package assignment5;
 
 public class Critter3 extends Critter {
 
@@ -62,5 +62,10 @@ public class Critter3 extends Critter {
 		}
 		return true;
 	}
-
+	@Override
+	public CritterShape viewShape() {
+		return CritterShape.STAR;
+	}
+	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.BROWN; }
+	public javafx.scene.paint.Color viewColor() { return null; }
 }

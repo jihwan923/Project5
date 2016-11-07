@@ -9,7 +9,7 @@
  * Slip days used: <0>
  * Fall 2016
  */
-package assignment4;
+package assignment5;
 
 public class Critter4 extends Critter {
 	private int randomDir;
@@ -56,5 +56,10 @@ public class Critter4 extends Critter {
 		randomDir = Critter.getRandomInt(8);
 		return false;
 	}
-
+	@Override
+	public CritterShape viewShape() {
+		return CritterShape.STAR;
+	}
+	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.PINK; }
+	public javafx.scene.paint.Color viewColor() { return null; }
 }

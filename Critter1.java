@@ -10,7 +10,7 @@
  * Fall 2016
  */
 
-package assignment4;
+package assignment5;
 
 public class Critter1 extends Critter {
 	
@@ -61,7 +61,7 @@ public class Critter1 extends Critter {
 	}
 
 	/*
-	 * Perfrom fight actions for critter 1
+	 * Perform fight actions for critter 1
 	 * @param opponent's string identity
 	 * @return returns true if critter wants to fight
 	 */
@@ -88,4 +88,12 @@ public class Critter1 extends Critter {
 		System.out.print("" + cannibals.size() + " total Critter1/Cannibals");
 		System.out.println();
 	}
+
+	@Override
+	public CritterShape viewShape() {
+		return CritterShape.TRIANGLE;
+	}
+	@Override
+	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.PURPLE; }
+	public javafx.scene.paint.Color viewColor() { return null; }
 }
