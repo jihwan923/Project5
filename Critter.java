@@ -1,5 +1,5 @@
 /* CRITTERS Main.java
- * EE422C Project 5 submission by
+ * EE422C Project 4 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -89,7 +89,7 @@ public abstract class Critter {
 	private boolean hasMoved = false;
 	private int xPast;
 	private int yPast;
-	private Shape cShape;
+	private static boolean fight = false;
 	
 	/**
 	  * Given position, it wraps it around the world_width if it is beyond the edge
@@ -170,7 +170,7 @@ public abstract class Critter {
 			y_coord = newY(direction);
 			hasMoved = true;
 		}
-		energy -= Params.walk_energy_cost;
+		energy = energy - Params.walk_energy_cost;
 	}
 	
 	/**
@@ -390,6 +390,8 @@ public abstract class Critter {
 		boolean repeatAgain = true;
 		boolean breakOut = false;
 		
+		fight = true; // set fight to true
+		
 		while(repeatAgain){ // deal with all conflicts/encounters of the critters
 			breakOut = false;
 			for(int i = 0; i < population.size(); i++){
@@ -442,10 +444,9 @@ public abstract class Critter {
 		for(int i = 0; i < population.size(); i++){ // remove all dead critters
 			Critter c = population.get(i);
 			c.hasMoved = false; 
-			
-			
 			c.xPast = c.x_coord; // update critters' x and y past coordinate values
 			c.yPast = c.y_coord; 
+			
 			if (c.energy <= 0){
 				population.remove(i);
 				i -= 1;
@@ -470,6 +471,7 @@ public abstract class Critter {
 			population.add(baby);
 		}
 		babies.clear();
+		fight = false; // set fight back to false
 	}
 	
 	/**
@@ -492,20 +494,15 @@ public abstract class Critter {
 			switch(c.viewShape()){
 				case CIRCLE:
 					Shape newCircle = new Circle(gridCellSize/2);
-					
 					newCircle.setFill(c.viewFillColor());
 					newCircle.setStroke(c.viewOutlineColor());
-					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newCircle, c.x_coord, c.y_coord);
-					//c.cShape = newCircle;
 					break;
 				case SQUARE:
 					Shape newSquare = new Rectangle(gridCellSize, gridCellSize);
 					newSquare.setFill(c.viewFillColor());
 					newSquare.setStroke(c.viewOutlineColor());
-					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newSquare, c.x_coord, c.y_coord);
-					//c.cShape = newSquare;
 					break;
 				case TRIANGLE:
 					Polygon newTriangle = new Polygon();
@@ -515,9 +512,7 @@ public abstract class Critter {
 							gridCellSize-1.0, gridCellSize-1.0});
 					newTriangle.setFill(c.viewFillColor());
 					newTriangle.setStroke(c.viewOutlineColor());
-					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newTriangle, c.x_coord, c.y_coord);
-					//c.cShape = newTriangle;
 					break;
 				case DIAMOND:
 					Polygon newDiamond = new Polygon();
@@ -528,22 +523,19 @@ public abstract class Critter {
 							gridCellSize-1.0, gridCellSize/2});
 					newDiamond.setFill(c.viewFillColor());
 					newDiamond.setStroke(c.viewOutlineColor());
-					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newDiamond, c.x_coord, c.y_coord);
-					//c.cShape = newDiamond;
 					break;
-				case STAR: ///////// NOT DONE
+				case STAR: 
 					Polygon newStar = new Polygon();
 					newStar.getPoints().setAll(new Double[]{
-							gridCellSize/2, 1.0,
-							0.0, gridCellSize/2,
-							gridCellSize/2, gridCellSize,
-							gridCellSize, gridCellSize/2});
+							2.0, gridCellSize-2.0,
+							gridCellSize/2, 2.0,
+							gridCellSize-10.0, gridCellSize-2.0,
+							2.0, gridCellSize/2.5,
+							gridCellSize-2.0, gridCellSize/2.5});
 					newStar.setFill(c.viewFillColor());
 					newStar.setStroke(c.viewOutlineColor());
-					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newStar, c.x_coord, c.y_coord);
-					//c.cShape = newStar;
 					break;
 			}
 				
@@ -592,9 +584,60 @@ public abstract class Critter {
 		}
 		return true;
 	}
+
 	
 	protected String look(int direction, boolean steps){
-		return " ";
+		int currentX = this.x_coord;
+		int currentY = this.y_coord;
+		int lookX;
+		int lookY;
+		
+		boolean taken = false;
+		String takenCritter = "";
+		
+		if(steps){
+			lookX = newX(direction);
+			lookY = newY(direction);
+		} 
+		else{
+			lookX = newX(direction);
+			lookY = newY(direction);
+			this.x_coord = lookX;
+			this.y_coord = lookY;
+			lookX = newX(direction);
+			lookY = newY(direction);
+			this.x_coord = currentX;
+			this.y_coord = currentY;
+		}
+		// if called during fight step
+		if(fight){
+			for(Critter c: population){
+				if(c.x_coord == lookX && c.y_coord == lookY && c != this){
+					taken = true;
+					takenCritter = c.toString();
+				}
+			}
+		
+		} // if called during doTimeStep
+		else{
+			for(Critter c: population){
+				if(c.xPast == lookX && c.yPast == lookY && c != this){
+					taken = true;
+					takenCritter = c.toString();
+				}
+			}
+		}
+		// reset coords back to original pre look
+		this.x_coord = currentX;
+		this.y_coord = currentY;
+		this.energy = this.energy - Params.look_energy_cost;
+		
+		if(taken){
+			return takenCritter;
+		}
+		else{
+			return null;
+		}
 	}
 	
 	/**
@@ -607,4 +650,3 @@ public abstract class Critter {
 		babies.clear();
 	}
 }
-
