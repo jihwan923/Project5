@@ -1,5 +1,5 @@
 /* CRITTERS Main.java
- * EE422C Project 4 submission by
+ * EE422C Project 5 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -89,6 +89,7 @@ public abstract class Critter {
 	private boolean hasMoved = false;
 	private int xPast;
 	private int yPast;
+	private Shape cShape;
 	
 	/**
 	  * Given position, it wraps it around the world_width if it is beyond the edge
@@ -169,7 +170,7 @@ public abstract class Critter {
 			y_coord = newY(direction);
 			hasMoved = true;
 		}
-		energy = energy - Params.walk_energy_cost;
+		energy -= Params.walk_energy_cost;
 	}
 	
 	/**
@@ -442,9 +443,9 @@ public abstract class Critter {
 			Critter c = population.get(i);
 			c.hasMoved = false; 
 			
+			
 			c.xPast = c.x_coord; // update critters' x and y past coordinate values
 			c.yPast = c.y_coord; 
-			
 			if (c.energy <= 0){
 				population.remove(i);
 				i -= 1;
@@ -477,11 +478,12 @@ public abstract class Critter {
 	  * @return nothing is returned
 	  */
 	public static void displayWorld() {
+		Main.grid.getChildren().clear();
 		for(int i = 0; i < Params.world_width; i++){
 			for(int j = 0; j < Params.world_height; j++){
 				Shape s = new Rectangle(gridCellSize,gridCellSize);
-				s.setFill(Color.WHITE);
-				s.setStroke(Color.BLACK);
+				s.setFill(null);
+				s.setStroke(Color.LIGHTYELLOW);
 				Main.grid.add(s, i, j);
 			}
 		}
@@ -490,15 +492,20 @@ public abstract class Critter {
 			switch(c.viewShape()){
 				case CIRCLE:
 					Shape newCircle = new Circle(gridCellSize/2);
+					
 					newCircle.setFill(c.viewFillColor());
 					newCircle.setStroke(c.viewOutlineColor());
+					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newCircle, c.x_coord, c.y_coord);
+					//c.cShape = newCircle;
 					break;
 				case SQUARE:
 					Shape newSquare = new Rectangle(gridCellSize, gridCellSize);
 					newSquare.setFill(c.viewFillColor());
 					newSquare.setStroke(c.viewOutlineColor());
+					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newSquare, c.x_coord, c.y_coord);
+					//c.cShape = newSquare;
 					break;
 				case TRIANGLE:
 					Polygon newTriangle = new Polygon();
@@ -508,7 +515,9 @@ public abstract class Critter {
 							gridCellSize-1.0, gridCellSize-1.0});
 					newTriangle.setFill(c.viewFillColor());
 					newTriangle.setStroke(c.viewOutlineColor());
+					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newTriangle, c.x_coord, c.y_coord);
+					//c.cShape = newTriangle;
 					break;
 				case DIAMOND:
 					Polygon newDiamond = new Polygon();
@@ -519,19 +528,22 @@ public abstract class Critter {
 							gridCellSize-1.0, gridCellSize/2});
 					newDiamond.setFill(c.viewFillColor());
 					newDiamond.setStroke(c.viewOutlineColor());
+					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newDiamond, c.x_coord, c.y_coord);
+					//c.cShape = newDiamond;
 					break;
-				case STAR: 
+				case STAR: ///////// NOT DONE
 					Polygon newStar = new Polygon();
 					newStar.getPoints().setAll(new Double[]{
-							10.0, gridCellSize-2.0,
-							gridCellSize/2, 2.0,
-							gridCellSize-10.0, gridCellSize-2.0,
-							2.0, gridCellSize/2.5,
-							gridCellSize-2.0, gridCellSize/2.5});
+							gridCellSize/2, 1.0,
+							0.0, gridCellSize/2,
+							gridCellSize/2, gridCellSize,
+							gridCellSize, gridCellSize/2});
 					newStar.setFill(c.viewFillColor());
 					newStar.setStroke(c.viewOutlineColor());
+					//Main.grid.getChildren().remove(c.cShape);
 					Main.grid.add(newStar, c.x_coord, c.y_coord);
+					//c.cShape = newStar;
 					break;
 			}
 				
@@ -582,28 +594,7 @@ public abstract class Critter {
 	}
 	
 	protected String look(int direction, boolean steps){
-		int currentX = this.x_coord;
-		int currentY = this.y_coord;
-		boolean taken = false;
-		String takenCritter= "";
-		this.walk(direction);
-		this.energy =+ Params.walk_energy_cost;	// don't minize energy
-		for(Critter c: population){
-			if(c.x_coord == this.x_coord && c.y_coord == this.y_coord && c != this){
-				taken = true;
-				takenCritter = c.toString();
-			}
-		}
-		// reset coords back to original pre look
-		this.x_coord = currentX;
-		this.y_coord = currentY;
-		this.energy =- Params.look_energy_cost;
-		if(taken){
-			return takenCritter;
-		}
-		else{
-			return null;
-		}
+		return " ";
 	}
 	
 	/**
@@ -616,3 +607,4 @@ public abstract class Critter {
 		babies.clear();
 	}
 }
+

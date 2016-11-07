@@ -11,7 +11,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-
 import assignment5.Critter;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -29,22 +28,28 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
 import javafx.stage.Screen;
 import javafx.stage.Stage;
-
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main extends Application{
-
+	
 	static GridPane grid = new GridPane();
 	private static String myPackage;
-	
 	static TextArea consoleText = new TextArea();
-	
 	static boolean animationSentinel = false;
+	public MenuButton statsMenu = new MenuButton();
+	public ArrayList<String> statsList = new ArrayList<String>();
+	private Timer animationTimer = new Timer();
+	private AnimationTask animation = new AnimationTask();
+	public int stepPerFrame = 1;
+	static int steps = 0;
 	
 	// Gets the package name.  The usage assumes that Critter and its subclasses are all in the same package.
     static {
@@ -55,13 +60,6 @@ public class Main extends Application{
 		launch(args);
 	}
 
-	public MenuButton statsMenu = new MenuButton();
-	public ArrayList<String> statsList = new ArrayList<String>();
-	private Timer animationTimer = new Timer();
-	private AnimationTask animation = new AnimationTask();
-	public int stepPerFrame = 1;
-	static int steps = 0;
-	
 	@Override
 	public void start(Stage primaryStage) {
 		try{
@@ -73,15 +71,38 @@ public class Main extends Application{
 			if (Params.world_height > Params.world_width){
 				Critter.gridCellSize = 850/Params.world_height;
 			}
-			primaryStage.setTitle("Controller");
-		
-			grid.setGridLinesVisible(true); // grid lines are now visible
-		
-			VBox pane = new VBox(); // pane is a controller
 			
+			primaryStage.setTitle("Controller");
+			grid.setGridLinesVisible(true); // grid lines are now visible
+			Pane pane = new Pane(); // pane is a controller
+			
+//************************************************* Label/ComboBoxes ****************************************************
+			Label makeCritter = new Label("Make Critter");
+			Label stats = new Label("Critter Statistics");
+			Label timestep = new Label("TimeStep");
+			Label animate = new Label("Animation");
+			Label quit = new Label("Quit");
 			ComboBox<String> critterDrop = new ComboBox<String>();
 			ComboBox<String> statsDrop = new ComboBox<String>();
-			ArrayList<String> classNames = getCritterClasses(myPackage);
+			
+//************************************************** Add Critter Names to ComboBoxes ******************************************************			
+			
+			ArrayList<String> classNames = new ArrayList<String>();			
+			ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+			Enumeration<URL> resources = classLoader.getResources(myPackage.replace('.', '/'));
+			ArrayList<File> directoryPath = new ArrayList<File>();
+			directoryPath.add(new File(resources.nextElement().getFile()));
+			String directory = directoryPath.get(0).toString().replaceAll("%20", " ");
+			File folder = new File(directory);
+			File[] fileList = folder.listFiles();
+			
+			for(int f = 0; f < fileList.length; f++){
+				if (fileList[f].isFile()){
+					String name = (String)fileList[f].getName();
+					//String[] nameEdit = name.split("\\.");
+					classNames.add(name.split("\\.")[0]);
+				}
+			}
 			for(String className: classNames){
 				try{
 					String realName = myPackage + "." + className;
@@ -103,7 +124,9 @@ public class Main extends Application{
 					continue;
 				}
 			}
-			
+
+//********************************************** Critter Slider ***************************************************
+
 			Slider critterSlider = new Slider(1, 100, 5);
 			critterSlider.setShowTickMarks(true);
 			critterSlider.setShowTickLabels(true);
@@ -112,12 +135,14 @@ public class Main extends Application{
 			critterSlider.valueProperty().addListener((obs, oldval, newVal) ->
 		    critterSlider.setValue(Math.round(newVal.doubleValue())));
 			
-			Label critterLabel = new Label(Double.toString(critterSlider.getValue()));
+			Label critterLabel = new Label("Number of Critters to add: " + Double.toString(critterSlider.getValue()));
 			
 			critterSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
 			    critterLabel.setText("Number of Critters to add: " + critterSlider.getValue());
 			});
 			
+//*********************************************** Add Critter Button ************************************************			
+
 			Button buttonCritter = new Button("Add Critter");
 			buttonCritter.setOnAction(new EventHandler<ActionEvent>() {
 				 
@@ -152,7 +177,9 @@ public class Main extends Application{
 	            	}
 	            }
 	        });
-			
+
+//********************************************* Button to Run Stats *******************************************************
+
 			Button buttonStats = new Button("RunStats");
 			buttonStats.setOnAction(new EventHandler<ActionEvent>() {
 				 
@@ -181,65 +208,40 @@ public class Main extends Application{
 	            }
 	        });
 			
-			Slider speedSlider = new Slider(1, 100, 5);
-			speedSlider.setShowTickMarks(true);
-			speedSlider.setShowTickLabels(true);
-			speedSlider.setMinorTickCount(1);
-			speedSlider.setBlockIncrement(1);
-			speedSlider.valueProperty().addListener((obs, oldval, newVal) ->
-			speedSlider.setValue(Math.round(newVal.doubleValue())));
+//********************************************************** Step 1 Button *************************************************************
 			
-			Label speedLabel = new Label(Double.toString(speedSlider.getValue()));
-			
-			speedSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
-			    speedLabel.setText("Animation Speed: " + speedSlider.getValue());
-			    stepPerFrame = (int)speedSlider.getValue();
-			});
-			
-			Button buttonAnimate = new Button("Run Animation");
-			buttonAnimate.setOnAction(new EventHandler<ActionEvent>() {
+			Button step1 = new Button("TimeStep +1");
+			step1.setOnAction(new EventHandler<ActionEvent>() {
 				 
 	            @Override
 	            public void handle(ActionEvent event) {
+	            	Critter.worldTimeStep();
+	            	Critter.displayWorld();
 	            	try{
-	            		buttonCritter.setDisable(true);
-	            		buttonStats.setDisable(true);
-	            		critterSlider.setDisable(true);
-	            		critterDrop.setDisable(true);
-	            		statsMenu.setDisable(true);
-	            		animationSentinel = true;
-	            		stepPerFrame = (int)speedSlider.getValue();
-	            		animationTimer.schedule(new AnimationTask(), 0);
+	            		for(int i = 0; i < statsMenu.getItems().size(); i++){
+	            			CustomMenuItem m = (CustomMenuItem)statsMenu.getItems().get(i);
+	            			CheckBox c = (CheckBox)m.getContent();
+	            			if(c.isSelected()){
+	            				String className = statsList.get(i);
+	            				String fullName = myPackage + "." + className;
+	            				Class critterClass = Class.forName(fullName);
+	            				java.util.List<Critter> critterClassList = Critter.getInstances(className);
+	            				Class<?>[] types = {List.class};
+	            				Method runStatsMethod = critterClass.getMethod("runStats", types);
+	            				runStatsMethod.invoke(null, critterClassList);
+	            			}
+	            		}
 	            	}
 	            	catch(Exception e){
 	            		e.printStackTrace();
 	            	}
 	            }
 	        });
-			
-			Button buttonStop = new Button("Stop Animation");
-			buttonStop.setOnAction(new EventHandler<ActionEvent>() {
-				 
-	            @Override
-	            public void handle(ActionEvent event) {
-	            	try{
-	            		buttonCritter.setDisable(false);
-	            		buttonStats.setDisable(false);
-	            		critterSlider.setDisable(false);
-	            		critterDrop.setDisable(false);
-	            		statsMenu.setDisable(false);
-	            		animationSentinel = false;
-	            		animationTimer.cancel();
-	            		animationTimer = new Timer();
-	            	}
-	            	catch(Exception e){
-	            		e.printStackTrace();
-	            	}
-	            }
-	        });
-			
-			Button buttonStep100 = new Button("Step 100");
-			buttonStep100.setOnAction(new EventHandler<ActionEvent>() {
+
+//************************************************************* Step 100 Button ************************************************************			
+
+			Button step100 = new Button("TimeStep +100");
+			step100.setOnAction(new EventHandler<ActionEvent>() {
 				 
 	            @Override
 	            public void handle(ActionEvent event) {
@@ -267,6 +269,110 @@ public class Main extends Application{
 	            	}
 	            }
 	        });
+
+//****************************************** Step 1000 *********************************************************
+
+			Button step1000 = new Button("TimeStep +1000");
+			step1000.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	for(int i = 0; i < 1000; i++){
+	            		Critter.worldTimeStep();
+	            	}
+	            	Critter.displayWorld();
+	            	try{
+	            		for(int i = 0; i < statsMenu.getItems().size(); i++){
+	            			CustomMenuItem m = (CustomMenuItem)statsMenu.getItems().get(i);
+	            			CheckBox c = (CheckBox)m.getContent();
+	            			if(c.isSelected()){
+	            				String className = statsList.get(i);
+	            				String fullName = myPackage + "." + className;
+	            				Class critterClass = Class.forName(fullName);
+	            				java.util.List<Critter> critterClassList = Critter.getInstances(className);
+	            				Class<?>[] types = {List.class};
+	            				Method runStatsMethod = critterClass.getMethod("runStats", types);
+	            				runStatsMethod.invoke(null, critterClassList);
+	            			}
+	            		}
+	            	}
+	            	catch(Exception e){
+	            		e.printStackTrace();
+	            	}
+	            }
+	        });
+
+//**************************************************** Slider to set Animation speed *********************************************
+			
+			Slider speedSlider = new Slider(1, 100, 5);
+			speedSlider.setShowTickMarks(true);
+			speedSlider.setShowTickLabels(true);
+			speedSlider.setMinorTickCount(1);
+			speedSlider.setBlockIncrement(1);
+			speedSlider.valueProperty().addListener((obs, oldval, newVal) ->
+			speedSlider.setValue(Math.round(newVal.doubleValue())));
+			
+			Label speedLabel = new Label("Animation Speed:" + Double.toString(speedSlider.getValue()));
+			
+			speedSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+			    speedLabel.setText("Animation Speed: " + speedSlider.getValue());
+			    stepPerFrame = (int)speedSlider.getValue();
+			});
+			
+//****************************************************** Animate Button *************************************************************
+			
+			Button buttonAnimate = new Button("Run Animation");
+			buttonAnimate.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	try{
+	            		buttonCritter.setDisable(true);
+	            		buttonStats.setDisable(true);
+	            		critterSlider.setDisable(true);
+	            		critterDrop.setDisable(true);
+	            		step1.setDisable(true);
+	            		step100.setDisable(true);
+	            		step1000.setDisable(true);
+	            		statsMenu.setDisable(true);
+	            		animationSentinel = true;
+	            		stepPerFrame = (int)speedSlider.getValue();
+	            		animationTimer.schedule(new AnimationTask(), 0);
+	            	}
+	            	catch(Exception e){
+	            		e.printStackTrace();
+	            	}
+	            }
+	        });
+			
+//********************************************************* Animate Stop Button ********************************************************
+			
+			Button buttonStop = new Button("Stop Animation");
+			buttonStop.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	try{
+	            		buttonCritter.setDisable(false);
+	            		buttonStats.setDisable(false);
+	            		critterSlider.setDisable(false);
+	            		critterDrop.setDisable(false);
+	            		step1.setDisable(false);
+	            		step100.setDisable(false);
+	            		step1000.setDisable(false);
+	            		statsMenu.setDisable(false);
+	            		animationSentinel = false;
+	            		animationTimer.cancel();
+	            		animationTimer = new Timer();
+	            	}
+	            	catch(Exception e){
+	            		e.printStackTrace();
+	            	}
+	            }
+	        });
+			
+
+//********************************************** Quit Button *******************************************************
 			
 			Button buttonQuit = new Button("Quit");
 			buttonQuit.setOnAction(new EventHandler<ActionEvent>() {
@@ -277,30 +383,85 @@ public class Main extends Application{
 	            }
 	        });
 			
-			pane.getChildren().add(buttonCritter);
-			pane.getChildren().add(critterDrop);
-			pane.getChildren().add(critterSlider);
-			pane.getChildren().add(critterLabel);
-			pane.getChildren().add(buttonStats);
-			pane.getChildren().add(statsMenu);
-			pane.getChildren().add(consoleText);
-			pane.getChildren().add(buttonAnimate);
-			pane.getChildren().add(buttonStop);
-			pane.getChildren().add(speedSlider);
-			pane.getChildren().add(speedLabel);
-			pane.getChildren().add(buttonStep100);
-			pane.getChildren().add(buttonQuit);
-		
-			Scene primaryScene = new Scene(pane, 500, 500);
+//********************************************* Configure Element Placement *******************************************
+			//Labels
+			makeCritter.setLayoutX(10);
+			makeCritter.setLayoutY(0);
+			makeCritter.setFont(Font.font("Verdana", 20));
+			makeCritter.setTextFill(Color.INDIGO);
+			timestep.setLayoutX(250);
+			timestep.setLayoutY(0);
+			timestep.setFont(Font.font("Verdana", 20));
+			timestep.setTextFill(Color.INDIGO);
+			stats.setLayoutX(10);
+			stats.setLayoutY(225);
+			stats.setFont(Font.font("Verdana", 20));
+			stats.setTextFill(Color.INDIGO);
+			animate.setLayoutX(10);
+			animate.setLayoutY(500);
+			animate.setFont(Font.font("Verdana", 20));
+			animate.setTextFill(Color.INDIGO);
+			quit.setLayoutX(250);
+			quit.setLayoutY(500);
+			quit.setFont(Font.font("Verdana", 20));
+			quit.setTextFill(Color.INDIGO);
+			//step
+			step1.setLayoutX(250);
+			step1.setLayoutY(50);
+			step100.setLayoutX(250);
+			step100.setLayoutY(100);
+			step1000.setLayoutX(250);
+			step1000.setLayoutY(150);
+			//make critter
+			critterDrop.setLayoutX(10);
+			critterDrop.setLayoutY(50);
+			critterLabel.setLayoutX(10);
+			critterLabel.setLayoutY(100);
+			critterSlider.setLayoutX(10);
+			critterSlider.setLayoutY(125);
+			buttonCritter.setLayoutX(10);
+			buttonCritter.setLayoutY(175);
+			//stats
+			statsMenu.setLayoutX(10);
+			statsMenu.setLayoutY(262);
+			buttonStats.setLayoutX(50);
+			buttonStats.setLayoutY(262);
+			consoleText.setLayoutX(10);
+			consoleText.setLayoutY(300);
+			//animation
+			speedLabel.setLayoutX(10);
+			speedLabel.setLayoutY(550);
+			speedSlider.setLayoutX(10);
+			speedSlider.setLayoutY(600);
+			buttonAnimate.setLayoutX(10);
+			buttonAnimate.setLayoutY(650);
+			buttonStop.setLayoutX(125);
+			buttonStop.setLayoutY(650);
+			buttonQuit.setLayoutX(250);
+			buttonQuit.setLayoutY(550);
+			
+			// add elements to controller
+			pane.getChildren().addAll(makeCritter, timestep, stats, animate);
+			pane.getChildren().addAll(buttonCritter, critterDrop, critterSlider, critterLabel);
+			pane.getChildren().addAll(buttonStats, statsMenu, consoleText);
+			pane.getChildren().addAll(buttonAnimate,buttonStop);
+			pane.getChildren().addAll(speedSlider, speedLabel);
+			pane.getChildren().addAll(step1, step100, step1000);
+			pane.getChildren().addAll(buttonQuit, quit);
+			
+			// create controller stage
+			Scene primaryScene = new Scene(pane, 500, 700);
 			primaryStage.setScene(primaryScene);
 			primaryStage.show();
-		
+			
+			// create graph stage
 			Stage secondStage = new Stage();
 			secondStage.setTitle("Critter World");
-		
 			Scene secondScene = new Scene(grid, (Params.world_width+1)*Critter.gridCellSize, (Params.world_height+2)*Critter.gridCellSize);
 			secondStage.setScene(secondScene);
 			secondStage.show();
+			
+			
 			Critter.displayWorld();
 		}
 		catch(Exception e){
@@ -308,36 +469,10 @@ public class Main extends Application{
 		}
 	}
 
+//************************************************ Get Critter Classes ************************************************************
 	
-	public ArrayList<String> getCritterClasses(String packageName)throws Exception{
-		ArrayList<String> listCritterClass = new ArrayList<String>();
-		
-		ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-		//assert classLoader != null;
-		String path = packageName.replace('.', '/');
-		Enumeration<URL> resrce;
-		Enumeration<URL> resources = classLoader.getResources(path);
-		ArrayList<File> directoryPath = new ArrayList<File>();
-		
-		URL resource = resources.nextElement();
-		directoryPath.add(new File(resource.getFile()));
-		String directory = directoryPath.get(0).toString();
-		directory = directory.replaceAll("%20", " ");
-		File folder = new File(directory);
-		File[] fileList = folder.listFiles();
-		
-		for(int i = 0; i < fileList.length; i++){
-			if (fileList[i].isFile()){
-				String name = (String)fileList[i].getName();
-				String[] nameEdit = name.split("\\.");
-				name = nameEdit[0];
-				listCritterClass.add(name);
-			}
-		}
-		
-		return listCritterClass;
-	}
 	
+//*************************************************** Output Console to Controller TextArea ************************************************
 	
 	static class PrivateConsole extends OutputStream {
         public TextArea streamOutput;
@@ -352,6 +487,8 @@ public class Main extends Application{
 		}
     }
 	
+//************************************************** Animation Run *************************************************************************
+	
 	public class AnimationTask extends TimerTask{
 
 		@Override
@@ -361,8 +498,6 @@ public class Main extends Application{
 					Critter.worldTimeStep();
 				}
 				Critter.displayWorld();
-				//steps++;
-				//System.out.println(steps);
 			
 				for(int i = 0; i < statsMenu.getItems().size(); i++){ // run stats
 					CustomMenuItem m = (CustomMenuItem)statsMenu.getItems().get(i);
@@ -385,7 +520,7 @@ public class Main extends Application{
 				
 				//System.out.println();
 			
-				animationTimer.schedule(new AnimationTask(), 100);
+				animationTimer.schedule(new AnimationTask(), 1000);
 			});
 		}
 	}
