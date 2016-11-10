@@ -1,5 +1,5 @@
 /* CRITTERS <MyClass.java>
- * EE422C Project 4 submission by
+ * EE422C Project 5 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -32,7 +32,7 @@ public class Critter3 extends Critter {
 	}
 	
 	/**
-	 * time step for critter3: critter walks, then reproduces if energy is greater than 100
+	 * time step for critter3: critter walks then reproduces if energy is greater than 100
 	 */
 	@Override
 	public void doTimeStep() {
@@ -56,7 +56,9 @@ public class Critter3 extends Critter {
 	public boolean fight(String opponent) {
 		// this critter only fights critters of other types
 		if(opponent.equals("3")){	// run if opponent is same critter type as itself
-			run(direction);
+			if(look(direction,false) == null){
+				run(direction);
+			}
 			direction = moveGenes[Critter.getRandomInt(4)];
 			return false;
 		}
@@ -67,5 +69,5 @@ public class Critter3 extends Critter {
 		return CritterShape.STAR;
 	}
 	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.BROWN; }
-	public javafx.scene.paint.Color viewColor() { return null; }
+	public javafx.scene.paint.Color viewColor() { return javafx.scene.paint.Color.BROWN; }
 }

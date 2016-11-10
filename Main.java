@@ -1,3 +1,15 @@
+/* CRITTERS Main.java
+ * EE422C Project 5 submission by
+ * Jihwan Lee
+ * jl54387
+ * 16445
+ * Kevin Liang
+ * kgl392
+ * 16445
+ * Slip days used: <0>
+ * Fall 2016
+ */
+
 package assignment5;
 
 import java.io.Console;
@@ -18,6 +30,7 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
+import javafx.geometry.Rectangle2D;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -27,8 +40,12 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.Slider;
 import javafx.scene.control.TextArea;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.RowConstraints;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
@@ -39,7 +56,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class Main extends Application{
-	
+	static double gridCellSize = 850/Params.world_width;
 	static GridPane grid = new GridPane();
 	private static String myPackage;
 	static TextArea consoleText = new TextArea();
@@ -69,7 +86,7 @@ public class Main extends Application{
 	        System.setOut(ps);
 	        System.setErr(ps);
 			if (Params.world_height > Params.world_width){
-				Critter.gridCellSize = 850/Params.world_height;
+				gridCellSize = 850/Params.world_height;
 			}
 			
 			primaryStage.setTitle("Controller");
@@ -81,7 +98,8 @@ public class Main extends Application{
 			Label stats = new Label("Critter Statistics");
 			Label timestep = new Label("TimeStep");
 			Label animate = new Label("Animation");
-			Label quit = new Label("Quit");
+			Label quit = new Label("Clear World/Quit");
+			Label seed = new Label("Seed");
 			ComboBox<String> critterDrop = new ComboBox<String>();
 			ComboBox<String> statsDrop = new ComboBox<String>();
 			
@@ -99,7 +117,6 @@ public class Main extends Application{
 			for(int f = 0; f < fileList.length; f++){
 				if (fileList[f].isFile()){
 					String name = (String)fileList[f].getName();
-					//String[] nameEdit = name.split("\\.");
 					classNames.add(name.split("\\.")[0]);
 				}
 			}
@@ -169,7 +186,7 @@ public class Main extends Application{
 		            			}
 		            		}
 	            			
-	            			//System.out.println();
+	            			System.out.println();
 	            		}
 	            	}
 	            	catch(Exception e){
@@ -200,7 +217,7 @@ public class Main extends Application{
 	            			}
 	            		}
 	            		
-	            		//System.out.println();
+	            		System.out.println();
 	            	}
 	            	catch(Exception e){
 	            		e.printStackTrace();
@@ -231,6 +248,7 @@ public class Main extends Application{
 	            				runStatsMethod.invoke(null, critterClassList);
 	            			}
 	            		}
+	            		System.out.println();
 	            	}
 	            	catch(Exception e){
 	            		e.printStackTrace();
@@ -263,6 +281,7 @@ public class Main extends Application{
 	            				runStatsMethod.invoke(null, critterClassList);
 	            			}
 	            		}
+	            		System.out.println();
 	            	}
 	            	catch(Exception e){
 	            		e.printStackTrace();
@@ -295,6 +314,7 @@ public class Main extends Application{
 	            				runStatsMethod.invoke(null, critterClassList);
 	            			}
 	            		}
+	            		System.out.println();
 	            	}
 	            	catch(Exception e){
 	            		e.printStackTrace();
@@ -319,6 +339,75 @@ public class Main extends Application{
 			    stepPerFrame = (int)speedSlider.getValue();
 			});
 			
+//********************************************** Quit Button *******************************************************
+			
+			Button buttonQuit = new Button("Quit");
+			buttonQuit.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	//ps.close();
+	            	System.exit(0);            
+	            }
+	        });
+
+			
+//**************************************************** Slider to set seed **********************************************************
+			
+			Slider seedSlider = new Slider(1, 100, 5);
+			seedSlider.setShowTickMarks(true);
+			seedSlider.setShowTickLabels(true);
+			seedSlider.setMinorTickCount(1);
+			seedSlider.setBlockIncrement(1);
+			seedSlider.valueProperty().addListener((obs, oldval, newVal) ->
+			seedSlider.setValue(Math.round(newVal.doubleValue())));
+			
+			Label seedLabel = new Label("Seed Value: " + Double.toString(seedSlider.getValue()));
+			
+			seedSlider.valueProperty().addListener((observable, oldValue, newValue) -> {
+			    seedLabel.setText("Seed Value: " + seedSlider.getValue());
+			});
+			
+//************************************************ Set Seed Button **********************************************************
+
+			Button setSeed = new Button("Set Seed");
+			setSeed.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	Critter.setSeed((long)seedSlider.getValue());
+	            }
+			});
+			
+//******************************************** Clear World ***********************************************************
+			Button clearWorld = new Button("Clear World");
+			clearWorld.setOnAction(new EventHandler<ActionEvent>() {
+				 
+	            @Override
+	            public void handle(ActionEvent event) {
+	            	Critter.clearWorld();
+	            	Critter.displayWorld();
+	            	try{
+	            		for(int i = 0; i < statsMenu.getItems().size(); i++){
+	            			CustomMenuItem m = (CustomMenuItem)statsMenu.getItems().get(i);
+	            			CheckBox c = (CheckBox)m.getContent();
+	            			if(c.isSelected()){
+	            				String className = statsList.get(i);
+	            				String fullName = myPackage + "." + className;
+	            				Class critterClass = Class.forName(fullName);
+	            				java.util.List<Critter> critterClassList = Critter.getInstances(className);
+	            				Class<?>[] types = {List.class};
+	            				Method runStatsMethod = critterClass.getMethod("runStats", types);
+	            				runStatsMethod.invoke(null, critterClassList);
+	            			}
+	            		}
+	            		System.out.println();
+	            	}
+	            	catch(Exception e){
+	            		e.printStackTrace();
+	            	}
+	            }
+			});
 //****************************************************** Animate Button *************************************************************
 			
 			Button buttonAnimate = new Button("Run Animation");
@@ -334,6 +423,11 @@ public class Main extends Application{
 	            		step1.setDisable(true);
 	            		step100.setDisable(true);
 	            		step1000.setDisable(true);
+	            		buttonQuit.setDisable(true);
+	            		setSeed.setDisable(true);
+	            		seedSlider.setDisable(true);
+	            		buttonAnimate.setDisable(true);
+	            		clearWorld.setDisable(true);
 	            		statsMenu.setDisable(true);
 	            		animationSentinel = true;
 	            		stepPerFrame = (int)speedSlider.getValue();
@@ -360,6 +454,11 @@ public class Main extends Application{
 	            		step1.setDisable(false);
 	            		step100.setDisable(false);
 	            		step1000.setDisable(false);
+	            		buttonQuit.setDisable(false);
+	            		setSeed.setDisable(false);
+	            		seedSlider.setDisable(false);
+	            		buttonAnimate.setDisable(false);
+	            		clearWorld.setDisable(false);
 	            		statsMenu.setDisable(false);
 	            		animationSentinel = false;
 	            		animationTimer.cancel();
@@ -368,18 +467,6 @@ public class Main extends Application{
 	            	catch(Exception e){
 	            		e.printStackTrace();
 	            	}
-	            }
-	        });
-			
-
-//********************************************** Quit Button *******************************************************
-			
-			Button buttonQuit = new Button("Quit");
-			buttonQuit.setOnAction(new EventHandler<ActionEvent>() {
-				 
-	            @Override
-	            public void handle(ActionEvent event) {
-	            	System.exit(0);            
 	            }
 	        });
 			
@@ -405,6 +492,10 @@ public class Main extends Application{
 			quit.setLayoutY(500);
 			quit.setFont(Font.font("Verdana", 20));
 			quit.setTextFill(Color.INDIGO);
+			seed.setLayoutX(250);
+			seed.setLayoutY(195);
+			seed.setFont(Font.font("Verdana", 20));
+			seed.setTextFill(Color.INDIGO);
 			//step
 			step1.setLayoutX(250);
 			step1.setLayoutY(50);
@@ -437,8 +528,17 @@ public class Main extends Application{
 			buttonAnimate.setLayoutY(650);
 			buttonStop.setLayoutX(125);
 			buttonStop.setLayoutY(650);
-			buttonQuit.setLayoutX(250);
+			clearWorld.setLayoutX(250);
+			clearWorld.setLayoutY(550);
+			buttonQuit.setLayoutX(350);
 			buttonQuit.setLayoutY(550);
+			//seed
+			seedSlider.setLayoutX(250);
+			seedSlider.setLayoutY(262);
+			seedLabel.setLayoutX(250);
+			seedLabel.setLayoutY(238);
+			setSeed.setLayoutX(410);
+			setSeed.setLayoutY(262);
 			
 			// add elements to controller
 			pane.getChildren().addAll(makeCritter, timestep, stats, animate);
@@ -447,20 +547,39 @@ public class Main extends Application{
 			pane.getChildren().addAll(buttonAnimate,buttonStop);
 			pane.getChildren().addAll(speedSlider, speedLabel);
 			pane.getChildren().addAll(step1, step100, step1000);
-			pane.getChildren().addAll(buttonQuit, quit);
+			pane.getChildren().addAll(buttonQuit, quit, clearWorld);
+			pane.getChildren().addAll(seed, seedSlider, seedLabel, setSeed);
+			
+			
+			Rectangle2D primaryScreenBounds = Screen.getPrimary().getVisualBounds();
 			
 			// create controller stage
 			Scene primaryScene = new Scene(pane, 500, 700);
 			primaryStage.setScene(primaryScene);
+			primaryStage.setX(primaryScreenBounds.getMinX());
+			primaryStage.setY(primaryScreenBounds.getMinY());
 			primaryStage.show();
 			
 			// create graph stage
+			
 			Stage secondStage = new Stage();
 			secondStage.setTitle("Critter World");
-			Scene secondScene = new Scene(grid, (Params.world_width+1)*Critter.gridCellSize, (Params.world_height+2)*Critter.gridCellSize);
+			Scene secondScene = new Scene(grid, Params.world_width*gridCellSize + Params.world_width, Params.world_height*gridCellSize+ Params.world_height);
+			//Scene secondScene = new Scene(grid, grid.getWidth(), grid.getHeight());
+			//Scene secondScene = new Scene(grid, 850, 850);
+			//Scene secondScene = new Scene(grid);
+			//grid.setPrefSize((Params.world_width)*gridCellSize, (Params.world_height)*gridCellSize); // Default width and height
+			//HBox h = new HBox();
+			//h.getChildren().add(grid);
+		    //Scene secondScene = new Scene(grid, (Params.world_width)*gridCellSize,(Params.world_height)*gridCellSize);
+			//h.setVisible(true);
+			//Scene secondScene = new Scene(h, h.getWidth(), h.getHeight()); 
+			//Scene secondScene = new Scene(grid);
 			secondStage.setScene(secondScene);
-			secondStage.show();
+			//secondStage.setX(primaryScreenBounds.getMaxX() - Params.world_width*gridCellSize + Params.world_width);
+			//secondStage.setY(primaryScreenBounds.getMinY());
 			
+			secondStage.show();
 			
 			Critter.displayWorld();
 		}
@@ -468,9 +587,6 @@ public class Main extends Application{
 			e.printStackTrace();
 		}
 	}
-
-//************************************************ Get Critter Classes ************************************************************
-	
 	
 //*************************************************** Output Console to Controller TextArea ************************************************
 	
@@ -517,6 +633,7 @@ public class Main extends Application{
 						e.printStackTrace();
 					}
 				}
+				System.out.println();
 				
 				//System.out.println();
 			

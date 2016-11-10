@@ -1,5 +1,5 @@
 /* CRITTERS Main.java
- * EE422C Project 4 submission by
+ * EE422C Project 5 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -30,7 +30,6 @@ import javafx.scene.shape.Shape;
 
 
 public abstract class Critter {
-	static double gridCellSize = 850/Params.world_width;
 	
 	private static String myPackage;
 	private	static List<Critter> population = new java.util.ArrayList<Critter>();
@@ -155,6 +154,40 @@ public abstract class Critter {
 		case 1: return wrapY(y_coord - 1);
 		case 2: return wrapY(y_coord - 1);
 		case 3: return wrapY(y_coord - 1);
+		}
+		return y_coord; // for direction 0 and 4
+	}
+	
+	/**
+	  * Given direction, it calculates the new x position
+	  * @param direction is the direction of the movement
+	  * @return return new x coordinate
+	  */
+	protected int newXPast(int direction){
+		switch(direction){
+		case 0: return wrapX(xPast + 1);
+		case 1: return wrapX(xPast + 1);
+		case 7: return wrapX(xPast + 1);
+		case 3: return wrapX(xPast - 1);
+		case 4: return wrapX(xPast - 1);
+		case 5: return wrapX(xPast - 1);
+		}
+		return x_coord; // for directions 2 and 6
+	}
+	
+	/**
+	  * Given direction, it calculates the new y position
+	  * @param direction is the direction of the movement
+	  * @return return new y coordinate
+	  */
+	protected int newYPast(int direction){
+		switch(direction){
+		case 5: return wrapY(yPast + 1);
+		case 6: return wrapY(yPast  + 1);
+		case 7: return wrapY(yPast  + 1);
+		case 1: return wrapY(yPast  - 1);
+		case 2: return wrapY(yPast  - 1);
+		case 3: return wrapY(yPast  - 1);
 		}
 		return y_coord; // for direction 0 and 4
 	}
@@ -366,7 +399,7 @@ public abstract class Critter {
 		 * implemented for grading tests to work.  Babies should be added to the general population 
 		 * at either the beginning OR the end of every timestep.
 		 */
-		protected List<Critter> getBabies() {
+		protected static List<Critter> getBabies() {
 			return babies;
 		}
 	}
@@ -458,10 +491,9 @@ public abstract class Critter {
 		}
 		
 		for(int j = 0; j < Params.refresh_algae_count; j++){ // refresh algae count
-			try{
+			try {
 				makeCritter("Algae");
-			}
-			catch(InvalidCritterException c){
+			} catch (InvalidCritterException e) {
 				
 			}
 		}
@@ -483,23 +515,22 @@ public abstract class Critter {
 		Main.grid.getChildren().clear();
 		for(int i = 0; i < Params.world_width; i++){
 			for(int j = 0; j < Params.world_height; j++){
-				Shape s = new Rectangle(gridCellSize,gridCellSize);
+				Shape s = new Rectangle(Main.gridCellSize,Main.gridCellSize);
 				s.setFill(null);
 				s.setStroke(Color.LIGHTYELLOW);
 				Main.grid.add(s, i, j);
 			}
 		}
-		
 		for(Critter c: population){ // place all the critters to the world
 			switch(c.viewShape()){
 				case CIRCLE:
-					Shape newCircle = new Circle(gridCellSize/2);
+					Shape newCircle = new Circle(Main.gridCellSize/2);
 					newCircle.setFill(c.viewFillColor());
 					newCircle.setStroke(c.viewOutlineColor());
 					Main.grid.add(newCircle, c.x_coord, c.y_coord);
 					break;
 				case SQUARE:
-					Shape newSquare = new Rectangle(gridCellSize, gridCellSize);
+					Shape newSquare = new Rectangle(Main.gridCellSize, Main.gridCellSize);
 					newSquare.setFill(c.viewFillColor());
 					newSquare.setStroke(c.viewOutlineColor());
 					Main.grid.add(newSquare, c.x_coord, c.y_coord);
@@ -507,9 +538,9 @@ public abstract class Critter {
 				case TRIANGLE:
 					Polygon newTriangle = new Polygon();
 					newTriangle.getPoints().setAll(new Double[]{
-							gridCellSize/2, 1.0,
-							1.0, gridCellSize-1.0,
-							gridCellSize-1.0, gridCellSize-1.0});
+							Main.gridCellSize/2, 1.0,
+							1.0, Main.gridCellSize-1.0,
+							Main.gridCellSize-1.0, Main.gridCellSize-1.0});
 					newTriangle.setFill(c.viewFillColor());
 					newTriangle.setStroke(c.viewOutlineColor());
 					Main.grid.add(newTriangle, c.x_coord, c.y_coord);
@@ -517,10 +548,10 @@ public abstract class Critter {
 				case DIAMOND:
 					Polygon newDiamond = new Polygon();
 					newDiamond.getPoints().setAll(new Double[]{
-							gridCellSize/2, 1.0,
-							1.0, gridCellSize/2,
-							gridCellSize/2, gridCellSize-1.0,
-							gridCellSize-1.0, gridCellSize/2});
+							Main.gridCellSize/2, 1.0,
+							1.0, Main.gridCellSize/2,
+							Main.gridCellSize/2, Main.gridCellSize-1.0,
+							Main.gridCellSize-1.0, Main.gridCellSize/2});
 					newDiamond.setFill(c.viewFillColor());
 					newDiamond.setStroke(c.viewOutlineColor());
 					Main.grid.add(newDiamond, c.x_coord, c.y_coord);
@@ -528,11 +559,16 @@ public abstract class Critter {
 				case STAR: 
 					Polygon newStar = new Polygon();
 					newStar.getPoints().setAll(new Double[]{
-							2.0, gridCellSize-2.0,
-							gridCellSize/2, 2.0,
-							gridCellSize-10.0, gridCellSize-2.0,
-							2.0, gridCellSize/2.5,
-							gridCellSize-2.0, gridCellSize/2.5});
+							Main.gridCellSize/2, 2.0,
+							Main.gridCellSize/3, (2*Main.gridCellSize)/5,
+							2.0, Main.gridCellSize/2,
+							Main.gridCellSize/4, (3*Main.gridCellSize)/4,
+							Main.gridCellSize/4, Main.gridCellSize - 2.0,
+							Main.gridCellSize/2, (4*Main.gridCellSize)/5,
+							(3*Main.gridCellSize)/4, Main.gridCellSize - 2.0,
+							(3*Main.gridCellSize)/4, (3*Main.gridCellSize)/4,
+							Main.gridCellSize - 2.0, Main.gridCellSize/2,
+							(2*Main.gridCellSize)/3, (2*Main.gridCellSize)/5});
 					newStar.setFill(c.viewFillColor());
 					newStar.setStroke(c.viewOutlineColor());
 					Main.grid.add(newStar, c.x_coord, c.y_coord);
@@ -585,29 +621,54 @@ public abstract class Critter {
 		return true;
 	}
 
-	
+	/**
+	 * checks if location being moved to is taken or not
+	 * @param direction
+	 * @param steps
+	 * @return null if not taken, critter.tostring is taken
+	 */
 	protected String look(int direction, boolean steps){
 		int currentX = this.x_coord;
 		int currentY = this.y_coord;
+		int currentPastX = this.xPast;
+		int currentPastY = this.yPast;
 		int lookX;
 		int lookY;
 		
 		boolean taken = false;
 		String takenCritter = "";
 		
-		if(steps){
-			lookX = newX(direction);
-			lookY = newY(direction);
+		if (fight){
+			if(!steps){
+				lookX = newX(direction);
+				lookY = newY(direction);
 		} 
+			else{
+				lookX = newX(direction);
+				lookY = newY(direction);
+				this.x_coord = lookX;
+				this.y_coord = lookY;
+				lookX = newX(direction);
+				lookY = newY(direction);
+				this.x_coord = currentX;
+				this.y_coord = currentY;
+			}
+		}
 		else{
-			lookX = newX(direction);
-			lookY = newY(direction);
-			this.x_coord = lookX;
-			this.y_coord = lookY;
-			lookX = newX(direction);
-			lookY = newY(direction);
-			this.x_coord = currentX;
-			this.y_coord = currentY;
+			if(!steps){
+				lookX = newXPast(direction);
+				lookY = newYPast(direction);
+			} 
+			else{
+				lookX = newXPast(direction);
+				lookY = newYPast(direction);
+				this.xPast = lookX;
+				this.yPast = lookY;
+				lookX = newXPast(direction);
+				lookY = newYPast(direction);
+				this.xPast = currentPastX;
+				this.yPast = currentPastY;
+			}
 		}
 		// if called during fight step
 		if(fight){
@@ -615,6 +676,7 @@ public abstract class Critter {
 				if(c.x_coord == lookX && c.y_coord == lookY && c != this){
 					taken = true;
 					takenCritter = c.toString();
+					break;
 				}
 			}
 		
@@ -624,6 +686,7 @@ public abstract class Critter {
 				if(c.xPast == lookX && c.yPast == lookY && c != this){
 					taken = true;
 					takenCritter = c.toString();
+					break;
 				}
 			}
 		}

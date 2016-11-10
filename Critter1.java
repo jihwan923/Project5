@@ -1,5 +1,5 @@
 /* CRITTERS Main.java
- * EE422C Project 4 submission by
+ * EE422C Project 5 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -49,6 +49,9 @@ public class Critter1 extends Critter {
 				walk(dir);
 				break;
 			case 2:
+				if(look(dir, true) == null){
+					run(dir);
+				}
 				break;
 		}
 		
@@ -95,5 +98,5 @@ public class Critter1 extends Critter {
 	}
 	@Override
 	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.PURPLE; }
-	public javafx.scene.paint.Color viewColor() { return null; }
+	public javafx.scene.paint.Color viewColor() { return javafx.scene.paint.Color.BLUE; }
 }

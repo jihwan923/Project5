@@ -1,5 +1,5 @@
 /* CRITTERS <MyClass.java>
- * EE422C Project 4 submission by
+ * EE422C Project 5 submission by
  * Jihwan Lee
  * jl54387
  * 16445
@@ -20,7 +20,7 @@ public class Critter4 extends Critter {
 		return "4";
 	}
 	/**
-	 * time step for Critter4: doesn't move 80% of the time, walks 10% of hte time, run's 10% of the time and reproduces if energy is greater than 200
+	 * time step for Critter4: doesn't move 80% of the time, walks 10% of the time, run's 10% of the time and reproduces if energy is greater than 200
 	 */
 	@Override
 	public void doTimeStep() {
@@ -58,8 +58,8 @@ public class Critter4 extends Critter {
 	}
 	@Override
 	public CritterShape viewShape() {
-		return CritterShape.STAR;
+		return CritterShape.DIAMOND;
 	}
 	public javafx.scene.paint.Color viewOutlineColor() { return javafx.scene.paint.Color.PINK; }
-	public javafx.scene.paint.Color viewColor() { return null; }
+	public javafx.scene.paint.Color viewColor() { return javafx.scene.paint.Color.CYAN; }
 }
